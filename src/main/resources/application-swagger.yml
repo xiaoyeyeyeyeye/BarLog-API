@@ -1,0 +1,7 @@
+# 仅用于导出 OpenAPI 文档，无需 PostgreSQL
+spring:
+  datasource:
+    url: jdbc:h2:mem:swagger;MODE=PostgreSQL;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:

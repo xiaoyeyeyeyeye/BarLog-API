@@ -1,0 +1,23 @@
+# 研发环境（本机联调，默认 profile）
+server:
+  port: ${SERVER_PORT:8090}
+
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/alcohol?currentSchema=public}
+
+alcohol:
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:8081,http://127.0.0.1:8081}
+  compat:
+    allow-anonymous: true
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+
+logging:
+  level:
+    com.alcohol: debug

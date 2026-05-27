@@ -1,0 +1,36 @@
+# 生产环境 — 敏感项必须通过环境变量注入（见 config/env.example）
+server:
+  port: ${SERVER_PORT:8080}
+  forward-headers-strategy: framework
+
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
+jwt:
+  secret: ${JWT_SECRET}
+
+alcohol:
+  upload-dir: ${UPLOAD_DIR:/var/lib/alcohol-api/uploads}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:https://app.barlog.app}
+  compat:
+    allow-anonymous: false
+  auth:
+    sms:
+      provider: ${SMS_PROVIDER:aws}
+    email:
+      provider: ${EMAIL_PROVIDER:aws}
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
+logging:
+  level:
+    com.alcohol: info
+    root: warn

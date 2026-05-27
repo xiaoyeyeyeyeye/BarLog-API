@@ -1,0 +1,95 @@
+# 公共配置；环境差异见 application-{dev,test,prod}.yml
+# 启动：--spring.profiles.active=dev|test|prod  或环境变量 SPRING_PROFILES_ACTIVE
+
+spring:
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  application:
+    name: alcohol-api
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/alcohol?currentSchema=public}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 12MB
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      id-type: assign_uuid
+
+jwt:
+  secret: ${JWT_SECRET:dev-only-change-me-use-at-least-32-characters-long}
+  expiration: ${JWT_EXPIRATION_MS:2592000000}
+
+alcohol:
+  gallery-default-hours: 12
+  upload-dir: ${UPLOAD_DIR:./uploads}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:*}
+  auth:
+    default-country-code: "+65"
+    default-locale: en-SG
+    otp:
+      length: 6
+      ttl-minutes: 5
+      max-attempts: 5
+      cooldown-seconds: 60
+      daily-limit-per-target: 10
+    sms:
+      provider: ${SMS_PROVIDER:mock}
+    email:
+      provider: ${EMAIL_PROVIDER:mock}
+      from-address: ${EMAIL_FROM:noreply@barlog.app}
+    oauth:
+      google:
+        client-id: ${GOOGLE_CLIENT_ID:}
+      facebook:
+        app-id: ${FACEBOOK_APP_ID:}
+        app-secret: ${FACEBOOK_APP_SECRET:}
+  compat:
+    allow-anonymous: ${COMPAT_ALLOW_ANONYMOUS:true}
+    demo-user-email: ${COMPAT_DEMO_EMAIL:demo@barlog.app}
+    demo-user-password: ${COMPAT_DEMO_PASSWORD:password123}
+    demo-user-display-name: ${COMPAT_DEMO_NAME:Mina Chen}
+  google:
+    places:
+      enabled: ${GOOGLE_PLACES_ENABLED:false}
+      api-key: ${GOOGLE_PLACES_API_KEY:}
+      default-city: ${GOOGLE_PLACES_DEFAULT_CITY:Singapore}
+      search-radius-m: ${GOOGLE_PLACES_SEARCH_RADIUS_M:3000}
+      max-result-count: ${GOOGLE_PLACES_MAX_RESULTS:20}
+      cache-ttl-seconds: ${GOOGLE_PLACES_CACHE_TTL_SECONDS:300}
+      detail-cache-ttl-seconds: ${GOOGLE_PLACES_DETAIL_CACHE_TTL_SECONDS:86400}
+      daily-request-limit: ${GOOGLE_PLACES_DAILY_REQUEST_LIMIT:1000}
+      warn-threshold-percent: ${GOOGLE_PLACES_WARN_THRESHOLD_PERCENT:80}
+
+aws:
+  region: ${AWS_REGION:ap-southeast-1}
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: method
+    display-request-duration: true
+    persist-authorization: true
+  show-actuator: false
+
+logging:
+  level:
+    com.alcohol: info

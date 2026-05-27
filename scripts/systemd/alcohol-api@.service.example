@@ -1,0 +1,28 @@
+[Unit]
+Description=BarLog Alcohol API (%i)
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+User=alcohol-api
+WorkingDirectory=/opt/alcohol-api
+# %i = dev | test | prod，对应 /etc/alcohol-api/%i.env
+EnvironmentFile=/etc/alcohol-api/%i.env
+ExecStart=/usr/bin/java -jar /opt/alcohol-api/alcohol-api.jar
+Restart=on-failure
+RestartSec=10
+
+# 日志
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=alcohol-api-%i
+
+[Install]
+WantedBy=multi-user.target
+
+# 安装示例：
+#   sudo cp config/env.example /etc/alcohol-api/prod.env
+#   sudo chmod 600 /etc/alcohol-api/prod.env
+#   sudo chown root:root /etc/alcohol-api/prod.env
+#   sudo systemctl enable alcohol-api@prod
+#   sudo systemctl start alcohol-api@prod

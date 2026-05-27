@@ -1,0 +1,80 @@
+# ── 构建产物 ──
+target/
+build/
+out/
+*.class
+*.jar
+*.war
+*.ear
+
+# ── 日志与本地调试 ──
+logs/
+*.log
+debug-*.log
+hs_err_pid*.log
+
+# ── 上传与用户数据 ──
+uploads/
+
+# ── IDE ──
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+.project
+.classpath
+.settings/
+
+# ── OS ──
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── 敏感配置 ──
+.env
+.env.*
+!.env.example
+.env.local
+.env.*.local
+config/*.env
+!config/env.example
+!config/env.*.example
+secrets/
+**/dev.env
+**/test.env
+**/prod.env
+**/staging.env
+application-local.yml
+application-local.properties
+**/application-local.yml
+
+# ── 密钥与证书 ──
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+id_rsa
+id_rsa.*
+*.credentials.json
+
+# ── 数据库备份 ──
+*.dump
+*.dump.sql
+*_backup.sql
+scripts/backups/
+**/pgdata/
+
+# ── 本地运维 / 过程文档（不进公开仓库）──
+COMMAND_LOG.md
+docs/SERVER_DEV_STATUS.md
+docs/SERVER_DEV_STATUS.local.md
+docs/SERVER_DEV_STATUS.local.md.example
+docs/GIT_PUSH_GUIDE.md
+docs/FRONTEND_COMPAT_TEST_PLAN.md
+docs/DEPLOYMENT_STEP_BY_STEP.md
+
+# ── Cursor ──
+.cursor/
+.agent/
