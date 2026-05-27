@@ -60,6 +60,8 @@ public class FrontendCompatService {
     private final GooglePlacesProperties googlePlacesProperties;
     private final BarPlacesSyncService barPlacesSyncService;
     private final PlacesToBarMapper placesToBarMapper;
+    private final com.alcohol.community.CommunityFeedService communityFeedService;
+    private final com.alcohol.chat.ChatService chatService;
 
     public FrontendAuthResponse login(FrontendLoginRequest req) {
         String email = PhoneEmailUtil.normalizeEmail(req.getEmail());
@@ -289,17 +291,7 @@ public class FrontendCompatService {
     }
 
     public FrontendItemsResponse<FrontendGalleryPostVO> galleryFeed(String city) {
-        String normalized = mapper.normalizeCityIn(city);
-        List<CheckIn> list = checkInMapper.selectList(new LambdaQueryWrapper<CheckIn>()
-                .in(CheckIn::getVisibility, "PUBLIC", "TONIGHT_ONLY")
-                .and(StringUtils.hasText(normalized), w -> w.eq(CheckIn::getCity, normalized).or().eq(CheckIn::getCity, city))
-                .orderByDesc(CheckIn::getCreatedAt)
-                .last("LIMIT 30"));
-        List<FrontendGalleryPostVO> posts = new ArrayList<>();
-        for (CheckIn checkIn : list) {
-            posts.add(mapper.toGalleryPost(checkIn, userMapper.selectById(checkIn.getUserId())));
-        }
-        return FrontendItemsResponse.of(posts);
+        return communityFeedService.galleryFeed(city, "24h");
     }
 
     public Map<String, Object> uploadImageStub() {
@@ -398,32 +390,20 @@ public class FrontendCompatService {
     }
 
     public FrontendItemsResponse<Map<String, Object>> conversations() {
-        return FrontendItemsResponse.of(List.of(
-                Map.of(
-                        "id", "conv_001",
-                        "title", "Alex Wu",
-                        "lastMessage", "Amber Room sounds good for one round.",
-                        "unreadCount", 1,
-                        "updatedAt", java.time.Instant.now().toString())));
+        return chatService.listConversations();
     }
 
     public FrontendItemsResponse<Map<String, Object>> messages(String conversationId) {
-        return FrontendItemsResponse.of(List.of(
-                Map.of(
-                        "id", "msg_001",
-                        "conversationId", conversationId,
-                        "senderId", "user_101",
-                        "body", "Amber Room sounds good for one round.",
-                        "createdAt", java.time.Instant.now().toString())));
+        return chatService.listMessages(conversationId, null, null);
     }
 
     public Map<String, Object> sendMessage(String conversationId, Map<String, Object> body) {
-        return Map.of(
-                "id", "msg_" + UUID.randomUUID(),
-                "conversationId", conversationId,
-                "senderId", UserContext.getUserId(),
-                "body", body != null ? body.getOrDefault("body", "") : "",
-                "createdAt", java.time.Instant.now().toString());
+        String text = body != null ? String.valueOf(body.getOrDefault("body", "")) : "";
+        return chatService.sendMessage(conversationId, text);
+    }
+
+    public void markRead(String conversationId) {
+        chatService.markRead(conversationId);
     }
 
     private FrontendAuthResponse buildAuthResponse(User user) {

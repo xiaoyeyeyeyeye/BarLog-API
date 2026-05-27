@@ -106,5 +106,6 @@ public class FrontendMiscController {
 
     @PostMapping("/api/chat/conversations/{conversationId}/read")
     public void markRead(@PathVariable String conversationId) {
+        compatService.markRead(conversationId);
     }
 }

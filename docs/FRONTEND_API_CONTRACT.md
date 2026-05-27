@@ -88,7 +88,44 @@
 
 ### Gallery / Match / Chat / AI
 
-与 mock-server 形状一致；Match/Chat/AI 当前为 **compat 占位实现**，联调 UI 可用，生产需替换。
+Gallery 与 Community 共用打卡数据；Match/AI 仍为 compat 占位；**Chat 已持久化**（REST + WebSocket）。
+
+#### Gallery（兼容旧路径）
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/api/gallery/feed` | `?city=&range=12h\|24h` → `{ items: GalleryPost[], nextCursor? }`；仅未过期 `public`/`tonight_only` 打卡 |
+
+#### Community（新）
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/api/community/eligibility` | `?city=&barId=` → `{ canViewCityFeed, canViewBarFeed, todayCheckInId?, todayBarId?, todayCity? }` |
+| GET | `/api/community/feed` | `?scope=city\|bar&city=&barId=&range=&cursor=&limit=` → `{ items: CommunityPost[], nextCursor? }`；**需当日打卡**，否则 `403 COMMUNITY_CHECKIN_REQUIRED` |
+| POST | `/api/community/posts/{checkInId}/like` | toggle 点赞 → `{ liked, likedCount }` |
+| GET | `/api/community/posts/{checkInId}/comments` | `{ items: Comment[] }` |
+| POST | `/api/community/posts/{checkInId}/comments` | `{ body }` → `Comment` |
+| POST | `/api/community/users/{userId}/wave` | `{ checkInId? }` → `{ conversationId, status }` |
+
+**Ephemeral 规则**
+
+- 打卡 `visibility` 为 `public` 或 `tonight_only` 时，`expires_at = now + 24h`（可配置 `GALLERY_DEFAULT_HOURS`）
+- Feed 只返回 `expires_at > now` 的记录；过期后自动从列表消失
+
+**CommunityPost** 在 GalleryPost 基础上扩展：`barId`, `socialStatus`, `visibility`, `likedCount`, `commentCount`, `likedByMe`, `expiresAt`, `avatarUrl`
+
+#### Chat（REST + WebSocket）
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/api/chat/conversations` | `{ items: Conversation[] }` |
+| GET | `/api/chat/conversations/{id}/messages` | `?cursor=&limit=` → `{ items: ChatMessage[], nextCursor? }` |
+| POST | `/api/chat/conversations/{id}/messages` | `{ body }` → `ChatMessage` |
+| POST | `/api/chat/conversations/{id}/read` | 清空未读 |
+
+WebSocket：`ws(s)://host/ws/chat?token=<accessToken>`（原生 JSON 帧，非 STOMP）
+
+- 服务端推送：`{ "type": "message.new", "conversationId", "message" }`、`{ "type": "message.read", ... }`
 
 ## 枚举映射（后端存储 ↔ 前端）
 

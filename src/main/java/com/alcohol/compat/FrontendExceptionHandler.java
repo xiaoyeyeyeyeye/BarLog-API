@@ -15,12 +15,13 @@ import java.util.stream.Collectors;
  * 前端兼容 API 异常格式：{@code { message, code }}，不使用 {@code Result} 包装。
  */
 @Order(0)
-@RestControllerAdvice(basePackages = "com.alcohol.compat")
+@RestControllerAdvice(basePackages = {"com.alcohol.compat", "com.alcohol.community", "com.alcohol.chat"})
 public class FrontendExceptionHandler {
 
     @ExceptionHandler(BizException.class)
     public ResponseEntity<FrontendErrorBody> handleBiz(BizException e) {
-        String code = e.getHttpStatus() == 401 ? "AUTH_INVALID" : "BIZ_ERROR";
+        String code = e.getErrorCode() != null ? e.getErrorCode()
+                : (e.getHttpStatus() == 401 ? "AUTH_INVALID" : "BIZ_ERROR");
         return ResponseEntity.status(e.getHttpStatus())
                 .body(new FrontendErrorBody(e.getMessage(), code));
     }

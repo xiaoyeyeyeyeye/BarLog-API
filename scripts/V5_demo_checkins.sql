@@ -4,7 +4,7 @@
 INSERT INTO check_ins (
     id, user_id, photo_url, card_image_url, drink_name, drink_category,
     bar_id, location_name, city, area, mood_tags, rating, vibe_mumbling,
-    card_style, visibility, social_status, created_at
+    card_style, visibility, social_status, created_at, expires_at
 )
 SELECT
     'checkin_demo_001',
@@ -23,7 +23,8 @@ SELECT
     'RECEIPT',
     'PUBLIC',
     'CHAT_OK',
-    NOW() - INTERVAL '3 days'
+    NOW() - INTERVAL '3 hours',
+    NOW() + INTERVAL '21 hours'
 FROM users u
 WHERE u.email = 'demo@barlog.app'
 ON CONFLICT (id) DO NOTHING;
@@ -31,7 +32,7 @@ ON CONFLICT (id) DO NOTHING;
 INSERT INTO check_ins (
     id, user_id, photo_url, drink_name, drink_category,
     bar_id, location_name, city, area, mood_tags, rating, vibe_mumbling,
-    card_style, visibility, social_status, created_at
+    card_style, visibility, social_status, created_at, expires_at
 )
 SELECT
     'checkin_demo_002',
@@ -49,7 +50,8 @@ SELECT
     'FILM_TICKET',
     'TONIGHT_ONLY',
     'NONE',
-    NOW() - INTERVAL '1 day'
+    NOW() - INTERVAL '1 hour',
+    NOW() + INTERVAL '23 hours'
 FROM users u
 WHERE u.email = 'demo@barlog.app'
 ON CONFLICT (id) DO NOTHING;

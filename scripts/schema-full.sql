@@ -114,6 +114,50 @@ CREATE INDEX IF NOT EXISTS idx_check_ins_drink ON check_ins(drink_id, created_at
 CREATE INDEX IF NOT EXISTS idx_check_ins_city ON check_ins(city, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_check_ins_bar ON check_ins(bar_id, created_at DESC);
 
+CREATE TABLE IF NOT EXISTS check_in_reactions (
+    id              VARCHAR(64) PRIMARY KEY,
+    check_in_id     VARCHAR(64) NOT NULL REFERENCES check_ins(id) ON DELETE CASCADE,
+    user_id         VARCHAR(64) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(check_in_id, user_id)
+);
+
+CREATE TABLE IF NOT EXISTS check_in_comments (
+    id              VARCHAR(64) PRIMARY KEY,
+    check_in_id     VARCHAR(64) NOT NULL REFERENCES check_ins(id) ON DELETE CASCADE,
+    user_id         VARCHAR(64) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    body            TEXT NOT NULL,
+    created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS conversations (
+    id                      VARCHAR(64) PRIMARY KEY,
+    type                    VARCHAR(32) NOT NULL DEFAULT 'direct',
+    title                   VARCHAR(256),
+    last_message_preview    VARCHAR(512),
+    created_at              TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at              TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS conversation_members (
+    id                  VARCHAR(64) PRIMARY KEY,
+    conversation_id     VARCHAR(64) NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
+    user_id             VARCHAR(64) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    unread_count        INT NOT NULL DEFAULT 0,
+    last_read_at        TIMESTAMP,
+    joined_at           TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(conversation_id, user_id)
+);
+
+CREATE TABLE IF NOT EXISTS chat_messages (
+    id                  VARCHAR(64) PRIMARY KEY,
+    conversation_id     VARCHAR(64) NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
+    sender_id           VARCHAR(64) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    body                TEXT NOT NULL,
+    content_type        VARCHAR(32) NOT NULL DEFAULT 'text',
+    created_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS user_badges (
     id              VARCHAR(64) PRIMARY KEY,
     user_id         VARCHAR(64) NOT NULL REFERENCES users(id),

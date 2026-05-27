@@ -34,7 +34,10 @@ jwt:
   expiration: ${JWT_EXPIRATION_MS:2592000000}
 
 alcohol:
-  gallery-default-hours: 12
+  gallery-default-hours: ${GALLERY_DEFAULT_HOURS:24}
+  community:
+    default-range-hours: ${COMMUNITY_DEFAULT_RANGE_HOURS:24}
+    max-feed-limit: 50
   upload-dir: ${UPLOAD_DIR:./uploads}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:*}
