@@ -10,7 +10,7 @@ alcohol:
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:8081,http://127.0.0.1:8081}
   compat:
-    allow-anonymous: true
+    allow-anonymous: ${COMPAT_ALLOW_ANONYMOUS:false}
 
 springdoc:
   api-docs:

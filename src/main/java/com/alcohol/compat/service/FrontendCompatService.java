@@ -1,6 +1,7 @@
 package com.alcohol.compat.service;
 
 import com.alcohol.common.BizException;
+import com.alcohol.compat.CheckInAccessHelper;
 import com.alcohol.compat.CompatAuthSupport;
 import com.alcohol.compat.FrontendMapper;
 import com.alcohol.compat.dto.*;
@@ -31,6 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -62,6 +64,7 @@ public class FrontendCompatService {
     private final PlacesToBarMapper placesToBarMapper;
     private final com.alcohol.community.CommunityFeedService communityFeedService;
     private final com.alcohol.chat.ChatService chatService;
+    private final CheckInAccessHelper checkInAccessHelper;
 
     public FrontendAuthResponse login(FrontendLoginRequest req) {
         String email = PhoneEmailUtil.normalizeEmail(req.getEmail());
@@ -113,6 +116,7 @@ public class FrontendCompatService {
     }
 
     public FrontendCheckInVO createCheckIn(FrontendCreateCheckInRequest req) {
+        checkInAccessHelper.requireUserId();
         if (StringUtils.hasText(req.getBarId())) {
             barPlacesSyncService.ensureBarExists(req.getBarId());
         }
@@ -122,7 +126,7 @@ public class FrontendCompatService {
     }
 
     public FrontendItemsResponse<FrontendCheckInVO> recentCheckIns() {
-        String userId = UserContext.getUserId();
+        String userId = checkInAccessHelper.requireUserId();
         List<CheckIn> list = checkInMapper.selectList(new LambdaQueryWrapper<CheckIn>()
                 .eq(CheckIn::getUserId, userId)
                 .orderByDesc(CheckIn::getCreatedAt)
@@ -135,6 +139,7 @@ public class FrontendCompatService {
         if (checkIn == null) {
             throw new BizException("Check-in not found", 404);
         }
+        checkInAccessHelper.assertReadable(checkIn);
         return mapper.toCheckIn(checkIn, userMapper.selectById(checkIn.getUserId()), resolveBar(checkIn.getBarId()));
     }
 
@@ -144,13 +149,12 @@ public class FrontendCompatService {
         if (checkIn == null) {
             throw new BizException("Check-in not found", 404);
         }
-        if (!checkIn.getUserId().equals(UserContext.getUserId())) {
-            throw new BizException("Forbidden", 403);
-        }
+        checkInAccessHelper.assertSelf(checkIn.getUserId());
         checkInMapper.deleteById(id);
     }
 
     public FrontendItemsResponse<FrontendCheckInVO> userCheckIns(String userId) {
+        checkInAccessHelper.assertSelf(userId);
         List<CheckIn> list = checkInMapper.selectList(new LambdaQueryWrapper<CheckIn>()
                 .eq(CheckIn::getUserId, userId)
                 .orderByDesc(CheckIn::getCreatedAt));
@@ -159,7 +163,7 @@ public class FrontendCompatService {
 
     public FrontendDiarySummaryVO diarySummary(String month) {
         YearMonth ym = parseMonth(month);
-        String userId = UserContext.getUserId();
+        String userId = checkInAccessHelper.requireUserId();
         List<CheckIn> monthList = loadMonthCheckIns(userId, ym);
 
         FrontendDiarySummaryVO vo = new FrontendDiarySummaryVO();
@@ -175,8 +179,9 @@ public class FrontendCompatService {
 
     public List<FrontendCalendarDayVO> diaryCalendar(String month) {
         YearMonth ym = parseMonth(month);
+        String userId = checkInAccessHelper.requireUserId();
         Map<String, Integer> counts = new LinkedHashMap<>();
-        for (CheckIn checkIn : loadMonthCheckIns(UserContext.getUserId(), ym)) {
+        for (CheckIn checkIn : loadMonthCheckIns(userId, ym)) {
             if (checkIn.getCreatedAt() == null) {
                 continue;
             }
@@ -194,8 +199,9 @@ public class FrontendCompatService {
     }
 
     public FrontendDiaryStatsVO diaryStats() {
+        String userId = checkInAccessHelper.requireUserId();
         List<CheckIn> list = checkInMapper.selectList(new LambdaQueryWrapper<CheckIn>()
-                .eq(CheckIn::getUserId, UserContext.getUserId()));
+                .eq(CheckIn::getUserId, userId));
         Map<String, Integer> categoryCounts = new HashMap<>();
         Map<String, Integer> moodCounts = new HashMap<>();
         for (CheckIn checkIn : list) {
@@ -284,8 +290,11 @@ public class FrontendCompatService {
     }
 
     public FrontendItemsResponse<FrontendCheckInVO> barCheckIns(String barId) {
+        LocalDateTime now = LocalDateTime.now();
         List<CheckIn> list = checkInMapper.selectList(new LambdaQueryWrapper<CheckIn>()
                 .eq(CheckIn::getBarId, barId)
+                .in(CheckIn::getVisibility, "PUBLIC", "TONIGHT_ONLY")
+                .gt(CheckIn::getExpiresAt, now)
                 .orderByDesc(CheckIn::getCreatedAt));
         return FrontendItemsResponse.of(toCheckInList(list));
     }
@@ -415,13 +424,10 @@ public class FrontendCompatService {
     }
 
     private User requireCurrentUser() {
-        String userId = UserContext.getUserId();
-        if (!StringUtils.hasText(userId)) {
-            throw new BizException("Missing bearer token", 401);
-        }
+        String userId = checkInAccessHelper.requireUserId();
         User user = userMapper.selectById(userId);
         if (user == null) {
-            throw new BizException("User not found", 401);
+            throw new BizException("User not found", 401, "AUTH_REQUIRED");
         }
         return user;
     }

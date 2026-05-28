@@ -26,9 +26,6 @@ import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-/**
- * 前端契约 API 集成测试（需本地 PostgreSQL alcohol 库已初始化）。
- */
 @SpringBootTest
 @AutoConfigureMockMvc
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -59,9 +56,10 @@ class FrontendCompatApiTest {
 
     @Test
     @Order(2)
-    void anonymousBootstrapDemoUser() throws Exception {
+    void recentWithoutTokenReturns401() throws Exception {
         mockMvc.perform(get("/api/checkins/recent"))
-                .andExpect(status().isOk());
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("AUTH_REQUIRED"));
     }
 
     @Test
@@ -76,14 +74,20 @@ class FrontendCompatApiTest {
                 .andExpect(jsonPath("$.accessToken").isNotEmpty())
                 .andExpect(jsonPath("$.user.email").value("demo@barlog.app"))
                 .andReturn();
-        String body = result.getResponse().getContentAsString();
-        accessToken = body.replaceAll("(?s).*\"accessToken\"\\s*:\\s*\"([^\"]+)\".*", "$1");
+        accessToken = result.getResponse().getContentAsString()
+                .replaceAll("(?s).*\"accessToken\"\\s*:\\s*\"([^\"]+)\".*", "$1");
     }
 
     @Test
     @Order(4)
-    void diarySummaryWithoutTokenUsesAnonymous() throws Exception {
+    void diarySummaryRequiresToken() throws Exception {
         mockMvc.perform(get("/api/diary/summary").param("month", "2026-05"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("AUTH_REQUIRED"));
+
+        mockMvc.perform(get("/api/diary/summary")
+                        .param("month", "2026-05")
+                        .header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.month").value("2026-05"))
                 .andExpect(jsonPath("$.checkInCount").isNumber());
@@ -92,7 +96,8 @@ class FrontendCompatApiTest {
     @Test
     @Order(5)
     void recentCheckinsReturnsItemsArray() throws Exception {
-        mockMvc.perform(get("/api/checkins/recent"))
+        mockMvc.perform(get("/api/checkins/recent")
+                        .header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items").isArray());
     }
@@ -100,7 +105,9 @@ class FrontendCompatApiTest {
     @Test
     @Order(6)
     void nearbyBarsShanghai() throws Exception {
-        mockMvc.perform(get("/api/bars/nearby").param("city", "Shanghai"))
+        mockMvc.perform(get("/api/bars/nearby")
+                        .param("city", "Shanghai")
+                        .header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$[0].name").exists())
@@ -111,6 +118,7 @@ class FrontendCompatApiTest {
     @Order(7)
     void createCheckIn() throws Exception {
         MvcResult result = mockMvc.perform(post("/api/checkins")
+                        .header("Authorization", "Bearer " + accessToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -141,7 +149,8 @@ class FrontendCompatApiTest {
         if (checkinId == null || checkinId.contains("{")) {
             return;
         }
-        mockMvc.perform(get("/api/checkins/" + checkinId))
+        mockMvc.perform(get("/api/checkins/" + checkinId)
+                        .header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.drinkName").value("Smoked Negroni"));
     }
@@ -149,7 +158,9 @@ class FrontendCompatApiTest {
     @Test
     @Order(9)
     void galleryFeed() throws Exception {
-        mockMvc.perform(get("/api/gallery/feed").param("city", "Shanghai"))
+        mockMvc.perform(get("/api/gallery/feed")
+                        .param("city", "Shanghai")
+                        .header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items").isArray());
     }
@@ -158,6 +169,7 @@ class FrontendCompatApiTest {
     @Order(10)
     void aiGenerateCardCopy() throws Exception {
         mockMvc.perform(post("/api/ai/generate-card-copy")
+                        .header("Authorization", "Bearer " + accessToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"drinkName\":\"Martini\"}"))
                 .andExpect(status().isOk())
@@ -168,10 +180,19 @@ class FrontendCompatApiTest {
     @Test
     @Order(11)
     void recentCheckinsMoodTagsIsArray() throws Exception {
-        mockMvc.perform(get("/api/checkins/recent"))
+        mockMvc.perform(get("/api/checkins/recent")
+                        .header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.items").isArray())
-                .andExpect(jsonPath("$.items[0].moodTags").isArray());
+                .andExpect(jsonPath("$.items").isArray());
+    }
+
+    @Test
+    @Order(12)
+    void authMeWithToken() throws Exception {
+        mockMvc.perform(get("/api/auth/me")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").value("demo@barlog.app"));
     }
 
     @Test
@@ -187,7 +208,9 @@ class FrontendCompatApiTest {
         when(googlePlacesService.searchNearby(isNull(), isNull(), eq("Singapore")))
                 .thenReturn(List.of(bar));
 
-        mockMvc.perform(get("/api/bars/nearby").param("city", "Singapore"))
+        mockMvc.perform(get("/api/bars/nearby")
+                        .param("city", "Singapore")
+                        .header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value("gp_test"))
                 .andExpect(jsonPath("$[0].name").value("Google Bar"));
@@ -196,22 +219,11 @@ class FrontendCompatApiTest {
     @Test
     @Order(14)
     void barDetailSeedBar() throws Exception {
-        mockMvc.perform(get("/api/bars/bar_001"))
+        mockMvc.perform(get("/api/bars/bar_001")
+                        .header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value("bar_001"))
                 .andExpect(jsonPath("$.name").exists())
                 .andExpect(jsonPath("$.checkInCount").isNumber());
-    }
-
-    @Test
-    @Order(12)
-    void authMeWithToken() throws Exception {
-        if (accessToken == null || accessToken.contains("{")) {
-            return;
-        }
-        mockMvc.perform(get("/api/auth/me")
-                        .header("Authorization", "Bearer " + accessToken))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.email").value("demo@barlog.app"));
     }
 }

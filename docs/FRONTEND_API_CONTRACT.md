@@ -10,7 +10,7 @@
 | 路径前缀 | `/api/...`（health 为 `/health`） |
 | 成功响应 | **直接 JSON**，无 `{ code, data }` 包装 |
 | 错误响应 | `{ "message": string, "code": string }` |
-| 认证 | `Authorization: Bearer <accessToken>`；研发可开 `allow-anonymous` 回落 demo 用户 |
+| 认证 | `Authorization: Bearer <accessToken>`；**dev 服务器默认 `COMPAT_ALLOW_ANONYMOUS=false`**，无 Token → `401 AUTH_REQUIRED` |
 | 时间 | ISO-8601 UTC 字符串（如 `2026-05-22T14:20:00Z`） |
 | 分页列表 | `{ "items": T[], "nextCursor"?: string }` |
 | 评分 | 前端 **1.0–5.0**（一位小数）；库内 **1–10** 整数，compat 层自动换算 |
@@ -37,13 +37,19 @@
 
 ### 打卡 Check-in
 
+**私人日记接口必须携带 Bearer Token，且仅返回/操作当前登录用户的数据。**
+
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| GET | `/api/checkins/recent` | `{ items: CheckIn[] }` |
-| POST | `/api/checkins` | body: `CreateCheckInPayload`，201 → `CheckIn` |
-| GET | `/api/checkins/{id}` | `CheckIn` |
-| DELETE | `/api/checkins/{id}` | `{}` |
-| GET | `/api/users/{userId}/checkins` | `{ items: CheckIn[] }` |
+| GET | `/api/checkins/recent` | **需登录**；`{ items: CheckIn[] }` 仅含 **当前用户** 打卡 |
+| POST | `/api/checkins` | **需登录**；body: `CreateCheckInPayload`，201 → `CheckIn` |
+| GET | `/api/checkins/{id}` | **需登录**；本人任意 visibility；他人仅 `public`/`tonight_only` 且未过期，否则 `403 CHECKIN_FORBIDDEN` |
+| DELETE | `/api/checkins/{id}` | **需登录**；仅本人可删 |
+| GET | `/api/users/{userId}/checkins` | **需登录**；`userId` 必须等于当前用户，否则 `403` |
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/api/bars/{barId}/checkins` | 仅返回该 bar 下 **公开且未过期** 的打卡（不含 private） |
 
 `CheckIn` 字段见 `domain.ts`；`moodTags` 始终为数组（可为 `[]`）。
 
