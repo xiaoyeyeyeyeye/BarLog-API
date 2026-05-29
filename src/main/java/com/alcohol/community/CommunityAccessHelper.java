@@ -32,7 +32,7 @@ public class CommunityAccessHelper {
     public String requireUserId() {
         String userId = UserContext.getUserId();
         if (!StringUtils.hasText(userId)) {
-            throw new BizException("Missing bearer token", 401);
+            throw new BizException("Missing bearer token", 401, "AUTH_REQUIRED");
         }
         return userId;
     }

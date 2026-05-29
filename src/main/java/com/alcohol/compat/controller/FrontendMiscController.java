@@ -3,6 +3,7 @@ package com.alcohol.compat.controller;
 import com.alcohol.compat.service.FrontendCompatService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
@@ -19,7 +20,7 @@ public class FrontendMiscController {
     }
 
     @PostMapping("/api/uploads/image")
-    public Map<String, Object> uploadImage() {
+    public Map<String, Object> uploadImage(@RequestParam(value = "file", required = false) MultipartFile file) {
         return compatService.uploadImageStub();
     }
 

@@ -67,7 +67,7 @@
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| GET | `/api/bars/nearby` | `?city=` 或 `?lat=&lng=` → `Bar[]` |
+| GET | `/api/bars/nearby` | `?city=` 或 `?lat=&lng=&radiusMeters=` → `{ items: Bar[], source, message? }` |
 | GET | `/api/bars/rankings` | 同上，按 `rating` 降序 |
 | GET | `/api/bars/{id}` | `BarDetail`（含 `checkInCount`）；可选 `?lat=&lng=` |
 | GET | `/api/bars/{id}/checkins` | `{ items: CheckIn[] }` |
@@ -100,7 +100,7 @@ Gallery 与 Community 共用打卡数据；Match/AI 仍为 compat 占位；**Cha
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| GET | `/api/gallery/feed` | `?city=&range=12h\|24h` → `{ items: GalleryPost[], nextCursor? }`；仅未过期 `public`/`tonight_only` 打卡 |
+| GET | `/api/gallery/feed` | `?city=&range=12h\|24h\|7d\|30d` → `{ items: GalleryPost[], nextCursor? }`；仅未过期 `public`/`tonight_only` 打卡 |
 
 #### Community（新）
 

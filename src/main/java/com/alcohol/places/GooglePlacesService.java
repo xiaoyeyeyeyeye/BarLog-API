@@ -35,11 +35,19 @@ public class GooglePlacesService {
     }
 
     public List<FrontendBarVO> searchNearby(Double lat, Double lng, String city) {
+        return searchNearby(lat, lng, city, null);
+    }
+
+    public List<FrontendBarVO> searchNearby(Double lat, Double lng, String city, Integer radiusMeters) {
         if (!isAvailable()) {
             return List.of();
         }
         if (lat != null && lng != null) {
-            return cachedList("nearby:" + lat + ":" + lng, () -> searchNearbyInternal(lat, lng));
+            int radius = radiusMeters != null && radiusMeters > 0
+                    ? radiusMeters
+                    : properties.getSearchRadiusM();
+            return cachedList("nearby:" + lat + ":" + lng + ":" + radius,
+                    () -> searchNearbyInternal(lat, lng, radius));
         }
         String queryCity = StringUtils.hasText(city) ? city : properties.getDefaultCity();
         return cachedList("text:" + queryCity.toLowerCase(), () -> searchTextInternal(queryCity));
@@ -74,11 +82,11 @@ public class GooglePlacesService {
         return mapper.toDetailBar(place, userLat, userLng, properties.getDefaultCity());
     }
 
-    private List<FrontendBarVO> searchNearbyInternal(double lat, double lng) {
+    private List<FrontendBarVO> searchNearbyInternal(double lat, double lng, int radiusMeters) {
         if (!usageLimiter.tryAcquire("searchNearby")) {
             return List.of();
         }
-        List<GooglePlace> places = client.searchNearby(lat, lng, properties.getSearchRadiusM());
+        List<GooglePlace> places = client.searchNearby(lat, lng, radiusMeters);
         return toSortedBars(places, lat, lng, null);
     }
 

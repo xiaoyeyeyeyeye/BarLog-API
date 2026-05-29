@@ -109,9 +109,10 @@ class FrontendCompatApiTest {
                         .param("city", "Shanghai")
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$[0].name").exists())
-                .andExpect(jsonPath("$[0].city").value("Shanghai"));
+                .andExpect(jsonPath("$.items").isArray())
+                .andExpect(jsonPath("$.items[0].name").exists())
+                .andExpect(jsonPath("$.items[0].city").value("Shanghai"))
+                .andExpect(jsonPath("$.source").value("mock_fallback"));
     }
 
     @Test
@@ -205,15 +206,16 @@ class FrontendCompatApiTest {
         bar.setRating(4.5);
         bar.setCheckInCount(0);
         when(googlePlacesService.isAvailable()).thenReturn(true);
-        when(googlePlacesService.searchNearby(isNull(), isNull(), eq("Singapore")))
+        when(googlePlacesService.searchNearby(isNull(), isNull(), eq("Singapore"), isNull()))
                 .thenReturn(List.of(bar));
 
         mockMvc.perform(get("/api/bars/nearby")
                         .param("city", "Singapore")
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value("gp_test"))
-                .andExpect(jsonPath("$[0].name").value("Google Bar"));
+                .andExpect(jsonPath("$.items[0].id").value("gp_test"))
+                .andExpect(jsonPath("$.items[0].name").value("Google Bar"))
+                .andExpect(jsonPath("$.source").value("google_places"));
     }
 
     @Test

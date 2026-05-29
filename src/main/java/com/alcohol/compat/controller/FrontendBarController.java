@@ -4,6 +4,7 @@ import com.alcohol.compat.service.FrontendCompatService;
 import com.alcohol.compat.vo.FrontendBarVO;
 import com.alcohol.compat.vo.FrontendCheckInVO;
 import com.alcohol.compat.vo.FrontendItemsResponse;
+import com.alcohol.compat.vo.FrontendNearbyBarsResponseVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,10 +18,11 @@ public class FrontendBarController {
     private final FrontendCompatService compatService;
 
     @GetMapping("/nearby")
-    public List<FrontendBarVO> nearby(@RequestParam(required = false) String city,
-                                      @RequestParam(required = false) Double lat,
-                                      @RequestParam(required = false) Double lng) {
-        return compatService.nearbyBars(city, lat, lng);
+    public FrontendNearbyBarsResponseVO nearby(@RequestParam(required = false) String city,
+                                               @RequestParam(required = false) Double lat,
+                                               @RequestParam(required = false) Double lng,
+                                               @RequestParam(required = false) Integer radiusMeters) {
+        return compatService.nearbyBars(city, lat, lng, radiusMeters);
     }
 
     @GetMapping("/rankings")

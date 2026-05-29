@@ -17,8 +17,9 @@ public class FrontendGalleryController {
     private final FrontendCompatService compatService;
 
     @GetMapping("/feed")
-    public FrontendItemsResponse<FrontendGalleryPostVO> feed(@RequestParam(required = false) String city) {
-        return compatService.galleryFeed(city);
+    public FrontendItemsResponse<FrontendGalleryPostVO> feed(@RequestParam(required = false) String city,
+                                                             @RequestParam(required = false) String range) {
+        return compatService.galleryFeed(city, range);
     }
 
     @PostMapping("/posts")
@@ -29,7 +30,7 @@ public class FrontendGalleryController {
 
     @GetMapping("/posts/{postId}")
     public FrontendGalleryPostVO getPost(@PathVariable String postId) {
-        return compatService.galleryFeed(null).getItems().stream()
+        return compatService.galleryFeed(null, "24h").getItems().stream()
                 .filter(p -> postId.equals(p.getId()))
                 .findFirst()
                 .orElse(stubPost(Map.of("imageUrl", "https://images.barlog.local/gallery/post.jpg")));

@@ -219,25 +219,41 @@ public class FrontendCompatService {
         return vo;
     }
 
-    public List<FrontendBarVO> nearbyBars(String city, Double lat, Double lng) {
+    public FrontendNearbyBarsResponseVO nearbyBars(String city, Double lat, Double lng, Integer radiusMeters) {
+        FrontendNearbyBarsResponseVO response = new FrontendNearbyBarsResponseVO();
         if (googlePlacesService.isAvailable()) {
             try {
                 String effectiveCity = StringUtils.hasText(city)
                         ? city
                         : googlePlacesProperties.getDefaultCity();
-                List<FrontendBarVO> fromGoogle = googlePlacesService.searchNearby(lat, lng, effectiveCity);
+                List<FrontendBarVO> fromGoogle = googlePlacesService.searchNearby(lat, lng, effectiveCity, radiusMeters);
                 if (!fromGoogle.isEmpty()) {
-                    return enrichBarCheckInCounts(fromGoogle);
+                    response.setItems(enrichBarCheckInCounts(fromGoogle));
+                    response.setSource("google_places");
+                    return response;
                 }
             } catch (Exception e) {
                 log.warn("Google Places nearby failed, falling back to seed data: {}", e.getMessage());
+                response.setItems(nearbyBarsFromSeed(city, lat, lng));
+                response.setSource("google_places_error");
+                response.setMessage(e.getMessage());
+                return response;
             }
         }
-        return nearbyBarsFromSeed(city, lat, lng);
+        response.setItems(nearbyBarsFromSeed(city, lat, lng));
+        response.setSource("mock_fallback");
+        if (!googlePlacesService.isAvailable()) {
+            response.setMessage("GOOGLE_PLACES_ENABLED is false or API key is not set");
+        }
+        return response;
+    }
+
+    private List<FrontendBarVO> nearbyBarItems(String city, Double lat, Double lng, Integer radiusMeters) {
+        return nearbyBars(city, lat, lng, radiusMeters).getItems();
     }
 
     public List<FrontendBarVO> barRankings(String city, Double lat, Double lng) {
-        return nearbyBars(city, lat, lng).stream()
+        return nearbyBarItems(city, lat, lng, null).stream()
                 .sorted(Comparator.comparing(FrontendBarVO::getRating, Comparator.nullsLast(Comparator.reverseOrder())))
                 .collect(Collectors.toList());
     }
@@ -299,8 +315,9 @@ public class FrontendCompatService {
         return FrontendItemsResponse.of(toCheckInList(list));
     }
 
-    public FrontendItemsResponse<FrontendGalleryPostVO> galleryFeed(String city) {
-        return communityFeedService.galleryFeed(city, "24h");
+    public FrontendItemsResponse<FrontendGalleryPostVO> galleryFeed(String city, String range) {
+        String effectiveRange = StringUtils.hasText(range) ? range : "24h";
+        return communityFeedService.galleryFeed(city, effectiveRange);
     }
 
     public Map<String, Object> uploadImageStub() {
