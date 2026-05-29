@@ -44,14 +44,13 @@ public class CommunityFeedService {
 
     public CommunityEligibilityVO eligibility(String city, String barId) {
         String userId = accessHelper.requireUserId();
+        boolean unlocked = accessHelper.hasTodayCheckIn(userId);
         CommunityEligibilityVO vo = new CommunityEligibilityVO();
-        vo.setCanViewCityFeed(accessHelper.hasTodayCityCheckIn(userId, city));
-        vo.setCanViewBarFeed(StringUtils.hasText(barId) && accessHelper.hasTodayBarCheckIn(userId, barId));
+        vo.setCanViewCommunity(unlocked);
+        vo.setCanViewCityFeed(unlocked);
+        vo.setCanViewBarFeed(unlocked);
 
-        CheckIn today = accessHelper.findTodayCheckIn(userId, city, null);
-        if (today == null && StringUtils.hasText(barId)) {
-            today = accessHelper.findTodayCheckIn(userId, null, barId);
-        }
+        CheckIn today = accessHelper.findLatestTodayCheckIn(userId);
         if (today != null) {
             vo.setTodayCheckInId(today.getId());
             vo.setTodayBarId(today.getBarId());
@@ -61,14 +60,15 @@ public class CommunityFeedService {
     }
 
     public FrontendItemsResponse<FrontendGalleryPostVO> galleryFeed(String city, String range) {
-        return toGalleryResponse(feedPosts("city", city, null, range, null, 30, false));
+        accessHelper.assertCommunityUnlocked();
+        return toGalleryResponse(feedPosts("global", null, null, range, null, 30, false));
     }
 
     public FrontendItemsResponse<CommunityPostVO> communityFeed(String scope, String city, String barId,
                                                                String range, String cursor, Integer limit) {
-        accessHelper.assertFeedAccess(scope, city, barId);
+        accessHelper.assertCommunityUnlocked();
         int pageSize = normalizeLimit(limit);
-        FeedPage page = feedPosts(scope, city, barId, range, cursor, pageSize, true);
+        FeedPage page = feedPosts("global", null, null, range, cursor, pageSize, true);
         FrontendItemsResponse<CommunityPostVO> response = new FrontendItemsResponse<>();
         response.setItems(page.posts());
         response.setNextCursor(page.nextCursor());
@@ -94,7 +94,7 @@ public class CommunityFeedService {
                 throw new BizException("barId is required for bar scope", 400);
             }
             qw.eq(CheckIn::getBarId, barId);
-        } else if (StringUtils.hasText(city)) {
+        } else if (!"global".equalsIgnoreCase(scope) && StringUtils.hasText(city)) {
             String normalized = frontendMapper.normalizeCityIn(city);
             qw.and(w -> w.eq(CheckIn::getCity, normalized).or().eq(CheckIn::getCity, city.trim()));
         }
@@ -154,8 +154,6 @@ public class CommunityFeedService {
             vo.setAuthorName(post.getAuthorName());
             vo.setImageUrl(post.getImageUrl());
             vo.setCaption(post.getCaption());
-            vo.setCity(post.getCity());
-            vo.setBarName(post.getBarName());
             vo.setLikedCount(post.getLikedCount());
             vo.setCreatedAt(post.getCreatedAt());
             return vo;

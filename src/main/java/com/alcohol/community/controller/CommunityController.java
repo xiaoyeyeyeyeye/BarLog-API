@@ -24,7 +24,7 @@ public class CommunityController {
     }
 
     @GetMapping("/feed")
-    public FrontendItemsResponse<CommunityPostVO> feed(@RequestParam String scope,
+    public FrontendItemsResponse<CommunityPostVO> feed(@RequestParam(required = false, defaultValue = "global") String scope,
                                                        @RequestParam(required = false) String city,
                                                        @RequestParam(required = false) String barId,
                                                        @RequestParam(required = false) String range,

@@ -100,14 +100,14 @@ Gallery 与 Community 共用打卡数据；Match/AI 仍为 compat 占位；**Cha
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| GET | `/api/gallery/feed` | `?city=&range=12h\|24h\|7d\|30d` → `{ items: GalleryPost[], nextCursor? }`；仅未过期 `public`/`tonight_only` 打卡 |
+| GET | `/api/gallery/feed` | `?range=12h\|24h\|7d\|30d` → `{ items: GalleryPost[], nextCursor? }`；**需今日任意打卡解锁**；全球公开打卡，不含城市/酒吧字段 |
 
 #### Community（新）
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| GET | `/api/community/eligibility` | `?city=&barId=` → `{ canViewCityFeed, canViewBarFeed, todayCheckInId?, todayBarId?, todayCity? }` |
-| GET | `/api/community/feed` | `?scope=city\|bar&city=&barId=&range=&cursor=&limit=` → `{ items: CommunityPost[], nextCursor? }`；**需当日打卡**，否则 `403 COMMUNITY_CHECKIN_REQUIRED` |
+| GET | `/api/community/eligibility` | → `{ canViewCommunity, todayCheckInId?, todayBarId?, todayCity? }`（`canViewCityFeed`/`canViewBarFeed` 与 `canViewCommunity` 同义，兼容旧版） |
+| GET | `/api/community/feed` | `?range=&cursor=&limit=` → 全球 Feed；**需今日任意打卡解锁**，否则 `403 COMMUNITY_CHECKIN_REQUIRED` |
 | POST | `/api/community/posts/{checkInId}/like` | toggle 点赞 → `{ liked, likedCount }` |
 | GET | `/api/community/posts/{checkInId}/comments` | `{ items: Comment[] }` |
 | POST | `/api/community/posts/{checkInId}/comments` | `{ body }` → `Comment` |

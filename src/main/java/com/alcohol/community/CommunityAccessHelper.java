@@ -100,25 +100,30 @@ public class CommunityAccessHelper {
                 .ge(CheckIn::getCreatedAt, todayStart())) > 0;
     }
 
-    public void assertFeedAccess(String scope, String city, String barId) {
+    public boolean hasTodayCheckIn(String userId) {
+        return checkInMapper.selectCount(new LambdaQueryWrapper<CheckIn>()
+                .eq(CheckIn::getUserId, userId)
+                .ge(CheckIn::getCreatedAt, todayStart())) > 0;
+    }
+
+    public void assertCommunityUnlocked() {
         String userId = requireUserId();
-        if ("bar".equalsIgnoreCase(scope)) {
-            if (!StringUtils.hasText(barId)) {
-                throw new BizException("barId is required for bar scope", 400);
-            }
-            if (!hasTodayBarCheckIn(userId, barId)) {
-                throw new BizException("Check in at this bar today to view the live feed",
-                        403, "COMMUNITY_CHECKIN_REQUIRED");
-            }
-            return;
-        }
-        if (!StringUtils.hasText(city)) {
-            throw new BizException("city is required for city scope", 400);
-        }
-        if (!hasTodayCityCheckIn(userId, city)) {
-            throw new BizException("Check in today to view community feed",
+        if (!hasTodayCheckIn(userId)) {
+            throw new BizException("Check in today to unlock community",
                     403, "COMMUNITY_CHECKIN_REQUIRED");
         }
+    }
+
+    public CheckIn findLatestTodayCheckIn(String userId) {
+        return checkInMapper.selectOne(new LambdaQueryWrapper<CheckIn>()
+                .eq(CheckIn::getUserId, userId)
+                .ge(CheckIn::getCreatedAt, todayStart())
+                .orderByDesc(CheckIn::getCreatedAt)
+                .last("LIMIT 1"));
+    }
+
+    public void assertFeedAccess(String scope, String city, String barId) {
+        assertCommunityUnlocked();
     }
 
     public CheckIn requireVisiblePost(String checkInId) {

@@ -84,13 +84,13 @@ class CommunityChatApiTest {
                         .param("city", "Shanghai")
                         .param("barId", "bar_001"))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.canViewCommunity").value(true))
                 .andExpect(jsonPath("$.canViewCityFeed").value(true))
                 .andExpect(jsonPath("$.canViewBarFeed").value(true));
 
         mockMvc.perform(get("/api/community/feed")
                         .header("Authorization", "Bearer " + accessToken)
-                        .param("scope", "city")
-                        .param("city", "Shanghai"))
+                        .param("range", "24h"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items").isArray());
     }
