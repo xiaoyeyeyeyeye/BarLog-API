@@ -2,6 +2,7 @@ package com.alcohol.compat.controller;
 
 import com.alcohol.compat.service.FrontendCompatService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -19,9 +20,14 @@ public class FrontendMiscController {
         return Map.of("ok", true, "service", "alcohol-api-frontend-compat");
     }
 
-    @PostMapping("/api/uploads/image")
-    public Map<String, Object> uploadImage(@RequestParam(value = "file", required = false) MultipartFile file) {
-        return compatService.uploadImageStub();
+    @PostMapping(value = "/api/uploads/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public Map<String, Object> uploadImage(@RequestParam("file") MultipartFile file) {
+        return compatService.uploadImage(file);
+    }
+
+    @PostMapping(value = "/api/uploads/card", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public Map<String, Object> uploadCardImage(@RequestParam("file") MultipartFile file) {
+        return compatService.uploadCardImage(file);
     }
 
     @GetMapping("/api/drinks/collection")
@@ -72,11 +78,6 @@ public class FrontendMiscController {
     @PostMapping("/api/match/answer")
     public Map<String, Object> matchAnswer() {
         return Map.of();
-    }
-
-    @GetMapping("/api/match/candidates")
-    public List<Map<String, Object>> matchCandidates() {
-        return compatService.matchCandidates();
     }
 
     @PostMapping("/api/match/request")

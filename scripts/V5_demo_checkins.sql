@@ -27,7 +27,12 @@ SELECT
     NOW() + INTERVAL '21 hours'
 FROM users u
 WHERE u.email = 'demo@barlog.app'
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE SET
+    visibility = EXCLUDED.visibility,
+    social_status = EXCLUDED.social_status,
+    created_at = EXCLUDED.created_at,
+    expires_at = EXCLUDED.expires_at,
+    vibe_mumbling = EXCLUDED.vibe_mumbling;
 
 INSERT INTO check_ins (
     id, user_id, photo_url, drink_name, drink_category,
@@ -54,4 +59,9 @@ SELECT
     NOW() + INTERVAL '23 hours'
 FROM users u
 WHERE u.email = 'demo@barlog.app'
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE SET
+    visibility = EXCLUDED.visibility,
+    social_status = EXCLUDED.social_status,
+    created_at = EXCLUDED.created_at,
+    expires_at = EXCLUDED.expires_at,
+    vibe_mumbling = EXCLUDED.vibe_mumbling;

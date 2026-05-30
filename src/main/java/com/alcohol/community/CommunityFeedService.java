@@ -1,6 +1,7 @@
 package com.alcohol.community;
 
 import com.alcohol.common.BizException;
+import com.alcohol.compat.MediaUrlResolver;
 import com.alcohol.community.vo.CommunityEligibilityVO;
 import com.alcohol.community.vo.CommunityPostVO;
 import com.alcohol.compat.FrontendMapper;
@@ -33,6 +34,7 @@ public class CommunityFeedService {
     private static final DateTimeFormatter CURSOR_TIME = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
 
     private final CommunityAccessHelper accessHelper;
+    private final MediaUrlResolver mediaUrlResolver;
     private final CheckInMapper checkInMapper;
     private final CheckInReactionMapper reactionMapper;
     private final CheckInCommentMapper commentMapper;
@@ -129,7 +131,9 @@ public class CommunityFeedService {
         post.setUserId(checkIn.getUserId());
         post.setAuthorName(user != null && StringUtils.hasText(user.getNickname()) ? user.getNickname() : "BarLog");
         post.setAvatarUrl(user != null ? user.getAvatarUrl() : null);
-        post.setImageUrl(StringUtils.hasText(checkIn.getCardImageUrl()) ? checkIn.getCardImageUrl() : checkIn.getPhotoUrl());
+        post.setImageUrl(mediaUrlResolver.resolveCheckInImage(
+                StringUtils.hasText(checkIn.getCardImageUrl()) ? checkIn.getCardImageUrl() : checkIn.getPhotoUrl(),
+                checkIn.getId()));
         post.setCaption(checkIn.getVibeMumbling());
         post.setCity(frontendMapper.normalizeCityOut(checkIn.getCity()));
         post.setBarId(checkIn.getBarId());

@@ -142,7 +142,35 @@ public class ChatService {
         map.put("lastMessage", conversation.getLastMessagePreview());
         map.put("unreadCount", membership.getUnreadCount() == null ? 0 : membership.getUnreadCount());
         map.put("updatedAt", formatInstant(conversation.getUpdatedAt()));
+        User peer = resolvePeerUser(conversation.getId(), userId);
+        if (peer != null) {
+            map.put("peerUserId", peer.getId());
+            map.put("peerDisplayName", conversationFactory.displayName(peer));
+            map.put("peerAvatarUrl", resolveAvatarUrl(peer));
+        }
         return map;
+    }
+
+    private User resolvePeerUser(String conversationId, String userId) {
+        List<ConversationMember> members = memberMapper.selectList(new LambdaQueryWrapper<ConversationMember>()
+                .eq(ConversationMember::getConversationId, conversationId));
+        for (ConversationMember member : members) {
+            if (!userId.equals(member.getUserId())) {
+                return userMapper.selectById(member.getUserId());
+            }
+        }
+        return null;
+    }
+
+    private String resolveAvatarUrl(User user) {
+        if (user == null) {
+            return "/api/media/avatar/unknown";
+        }
+        if (StringUtils.hasText(user.getAvatarUrl())
+                && !user.getAvatarUrl().contains("barlog.local")) {
+            return user.getAvatarUrl();
+        }
+        return "/api/media/avatar/" + user.getId();
     }
 
     private String resolvePeerName(String conversationId, String userId) {

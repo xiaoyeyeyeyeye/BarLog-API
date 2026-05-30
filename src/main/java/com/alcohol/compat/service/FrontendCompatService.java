@@ -4,6 +4,7 @@ import com.alcohol.common.BizException;
 import com.alcohol.compat.CheckInAccessHelper;
 import com.alcohol.compat.CompatAuthSupport;
 import com.alcohol.compat.FrontendMapper;
+import com.alcohol.compat.MediaUrlResolver;
 import com.alcohol.compat.dto.*;
 import com.alcohol.compat.vo.*;
 import com.alcohol.context.UserContext;
@@ -30,6 +31,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -65,6 +67,8 @@ public class FrontendCompatService {
     private final com.alcohol.community.CommunityFeedService communityFeedService;
     private final com.alcohol.chat.ChatService chatService;
     private final CheckInAccessHelper checkInAccessHelper;
+    private final MediaUrlResolver mediaUrlResolver;
+    private final FileStorageService fileStorageService;
 
     public FrontendAuthResponse login(FrontendLoginRequest req) {
         String email = PhoneEmailUtil.normalizeEmail(req.getEmail());
@@ -122,7 +126,7 @@ public class FrontendCompatService {
         }
         var vo = checkInService.create(toBackendCreate(req));
         CheckIn entity = checkInMapper.selectById(vo.getId());
-        return mapper.toCheckIn(entity, userMapper.selectById(entity.getUserId()), resolveBar(entity.getBarId()));
+        return decorateCheckIn(mapper.toCheckIn(entity, userMapper.selectById(entity.getUserId()), resolveBar(entity.getBarId())));
     }
 
     public FrontendItemsResponse<FrontendCheckInVO> recentCheckIns() {
@@ -140,7 +144,7 @@ public class FrontendCompatService {
             throw new BizException("Check-in not found", 404);
         }
         checkInAccessHelper.assertReadable(checkIn);
-        return mapper.toCheckIn(checkIn, userMapper.selectById(checkIn.getUserId()), resolveBar(checkIn.getBarId()));
+        return decorateCheckIn(mapper.toCheckIn(checkIn, userMapper.selectById(checkIn.getUserId()), resolveBar(checkIn.getBarId())));
     }
 
     @Transactional
@@ -320,10 +324,17 @@ public class FrontendCompatService {
         return communityFeedService.galleryFeed(city, effectiveRange);
     }
 
-    public Map<String, Object> uploadImageStub() {
-        String id = UUID.randomUUID().toString();
+    public Map<String, Object> uploadImage(MultipartFile file) {
+        return buildUploadResponse(fileStorageService.store(file, "photos"));
+    }
+
+    public Map<String, Object> uploadCardImage(MultipartFile file) {
+        return buildUploadResponse(fileStorageService.store(file, "cards"));
+    }
+
+    private Map<String, Object> buildUploadResponse(String storedPath) {
         return Map.of(
-                "imageUrl", "https://images.barlog.local/uploads/" + id + ".jpg",
+                "imageUrl", storedPath,
                 "width", 1200,
                 "height", 1600,
                 "mimeType", "image/jpeg");
@@ -401,18 +412,6 @@ public class FrontendCompatService {
 
     public Map<String, Object> matchStatus(String status) {
         return Map.of("status", status);
-    }
-
-    public List<Map<String, Object>> matchCandidates() {
-        return List.of(
-                Map.of("id", "user_101", "displayName", "Alex Wu",
-                        "avatarUrl", "https://images.barlog.local/avatars/alex.png",
-                        "reason", "Also likes bitter cocktails and quiet counters.",
-                        "distanceMeters", 700),
-                Map.of("id", "user_102", "displayName", "Rin Zhao",
-                        "avatarUrl", "https://images.barlog.local/avatars/rin.png",
-                        "reason", "Looking for low-pressure wine bar plans tonight.",
-                        "distanceMeters", 1250));
     }
 
     public FrontendItemsResponse<Map<String, Object>> conversations() {
@@ -506,11 +505,22 @@ public class FrontendCompatService {
     private List<FrontendCheckInVO> toCheckInList(List<CheckIn> list) {
         Map<String, Bar> barCache = new HashMap<>();
         return list.stream()
-                .map(c -> mapper.toCheckIn(c, userMapper.selectById(c.getUserId()),
+                .map(c -> decorateCheckIn(mapper.toCheckIn(c, userMapper.selectById(c.getUserId()),
                         barCache.computeIfAbsent(
                                 c.getBarId() != null ? c.getBarId() : "",
-                                id -> StringUtils.hasText(id) ? barMapper.selectById(id) : null)))
+                                id -> StringUtils.hasText(id) ? barMapper.selectById(id) : null))))
                 .toList();
+    }
+
+    private FrontendCheckInVO decorateCheckIn(FrontendCheckInVO vo) {
+        if (vo == null) {
+            return null;
+        }
+        vo.setPhotoUrl(mediaUrlResolver.resolveCheckInImage(vo.getPhotoUrl(), vo.getId()));
+        vo.setCardImageUrl(mediaUrlResolver.resolveCheckInImage(
+                StringUtils.hasText(vo.getCardImageUrl()) ? vo.getCardImageUrl() : vo.getPhotoUrl(),
+                vo.getId()));
+        return vo;
     }
 
     private Bar resolveBar(String barId) {

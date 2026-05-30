@@ -157,6 +157,22 @@ class FrontendCompatApiTest {
     }
 
     @Test
+    @Order(81)
+    void getSipCardDetail() throws Exception {
+        if (checkinId == null || checkinId.contains("{")) {
+            return;
+        }
+        mockMvc.perform(get("/api/sip-cards/" + checkinId)
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(checkinId))
+                .andExpect(jsonPath("$.photoUrl").isNotEmpty())
+                .andExpect(jsonPath("$.cardImageUrl").isNotEmpty())
+                .andExpect(jsonPath("$.author.displayName").isNotEmpty())
+                .andExpect(jsonPath("$.owner").value(true));
+    }
+
+    @Test
     @Order(9)
     void galleryFeed() throws Exception {
         mockMvc.perform(get("/api/gallery/feed")

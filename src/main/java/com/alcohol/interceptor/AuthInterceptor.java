@@ -34,7 +34,9 @@ public class AuthInterceptor implements HandlerInterceptor {
             "/swagger-ui/",
             "/v3/api-docs",
             "/error",
-            "/health"
+            "/health",
+            "/uploads/",
+            "/api/media/"
     );
 
     @Override
