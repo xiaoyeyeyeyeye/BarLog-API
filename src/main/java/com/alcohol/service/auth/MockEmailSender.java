@@ -17,4 +17,9 @@ public class MockEmailSender implements EmailSender {
         log.info("[MOCK EMAIL] to={} code={} locale={} (dev only, configure alcohol.auth.email.provider=aws for production)",
                 email, code, locale);
     }
+
+    @Override
+    public void sendWelcome(String email, String displayName, String locale) {
+        log.info("[MOCK EMAIL] welcome to={} name={} locale={}", email, displayName, locale);
+    }
 }

@@ -21,8 +21,9 @@ public class FrontendBarController {
     public FrontendNearbyBarsResponseVO nearby(@RequestParam(required = false) String city,
                                                @RequestParam(required = false) Double lat,
                                                @RequestParam(required = false) Double lng,
-                                               @RequestParam(required = false) Integer radiusMeters) {
-        return compatService.nearbyBars(city, lat, lng, radiusMeters);
+                                               @RequestParam(required = false) Integer radiusMeters,
+                                               @RequestParam(required = false) String query) {
+        return compatService.nearbyBars(city, lat, lng, radiusMeters, query);
     }
 
     @GetMapping("/rankings")

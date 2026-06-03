@@ -38,6 +38,7 @@ public class WebConfig implements WebMvcConfigurer {
                         "/api/auth/refresh",
                         "/api/auth/otp/**",
                         "/api/auth/oauth/**",
+                        "/api/auth/google/**",
                         "/api/auth/methods",
                         "/api/auth/login/**",
                         "/api/auth/register/**");

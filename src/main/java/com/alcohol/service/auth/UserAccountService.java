@@ -125,6 +125,24 @@ public class UserAccountService {
         return new OAuthLoginResult(user, isNew);
     }
 
+    @Transactional
+    public User loginOAuthUser(OAuthUserInfo info, AuthProvider provider) {
+        User linked = findByOAuth(provider.name(), info.getProviderUserId());
+        if (linked != null) {
+            assertActive(linked);
+            return linked;
+        }
+        if (StringUtils.hasText(info.getEmail())) {
+            User byEmail = findByEmail(info.getEmail());
+            if (byEmail != null) {
+                assertActive(byEmail);
+                linkOAuth(byEmail.getId(), info, provider);
+                return byEmail;
+            }
+        }
+        throw new BizException("No BarLog account linked to this Google identity", 404);
+    }
+
     public record OAuthLoginResult(User user, boolean newUser) {}
 
     @Transactional

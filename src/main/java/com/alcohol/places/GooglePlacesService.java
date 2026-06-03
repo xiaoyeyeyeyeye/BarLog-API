@@ -10,6 +10,7 @@ import org.springframework.util.StringUtils;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -39,8 +40,24 @@ public class GooglePlacesService {
     }
 
     public List<FrontendBarVO> searchNearby(Double lat, Double lng, String city, Integer radiusMeters) {
+        return searchNearby(lat, lng, city, radiusMeters, null);
+    }
+
+    public List<FrontendBarVO> searchNearby(Double lat, Double lng, String city, Integer radiusMeters, String query) {
         if (!isAvailable()) {
             return List.of();
+        }
+        if (StringUtils.hasText(query)) {
+            int radius = radiusMeters != null && radiusMeters > 0
+                    ? radiusMeters
+                    : properties.getSearchRadiusM();
+            if (lat != null && lng != null) {
+                return cachedList("text-query:" + query.trim().toLowerCase(Locale.ROOT) + ":" + lat + ":" + lng + ":" + radius,
+                        () -> searchTextQueryInternal(query.trim(), lat, lng, radius));
+            }
+            String queryCity = StringUtils.hasText(city) ? city : properties.getDefaultCity();
+            return cachedList("text-query:" + query.trim().toLowerCase(Locale.ROOT) + ":" + queryCity.toLowerCase(Locale.ROOT),
+                    () -> searchTextQueryInternal(query.trim() + " bar " + queryCity, null, null, radius));
         }
         if (lat != null && lng != null) {
             int radius = radiusMeters != null && radiusMeters > 0
@@ -96,6 +113,16 @@ public class GooglePlacesService {
         }
         List<GooglePlace> places = client.searchText("bars in " + city);
         return toSortedBars(places, null, null, city);
+    }
+
+    private List<FrontendBarVO> searchTextQueryInternal(String textQuery, Double lat, Double lng, int radiusMeters) {
+        if (!usageLimiter.tryAcquire("searchTextQuery:" + textQuery)) {
+            return List.of();
+        }
+        List<GooglePlace> places = lat != null && lng != null
+                ? client.searchText(textQuery, lat, lng, radiusMeters)
+                : client.searchText(textQuery);
+        return toSortedBars(places, lat, lng, null);
     }
 
     private List<FrontendBarVO> toSortedBars(List<GooglePlace> places, Double lat, Double lng, String city) {

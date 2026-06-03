@@ -69,7 +69,22 @@ public class GooglePlacesClient {
     public List<GooglePlace> searchText(String textQuery) {
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("textQuery", textQuery);
+        body.put("includedType", "bar");
         body.put("maxResultCount", properties.getMaxResultCount());
+
+        JsonNode response = post("/places:searchText", SEARCH_FIELD_MASK, body);
+        return parsePlacesArray(response);
+    }
+
+    public List<GooglePlace> searchText(String textQuery, double lat, double lng, int radiusMeters) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("textQuery", textQuery);
+        body.put("includedType", "bar");
+        body.put("maxResultCount", properties.getMaxResultCount());
+        body.put("locationBias", Map.of(
+                "circle", Map.of(
+                        "center", Map.of("latitude", lat, "longitude", lng),
+                        "radius", (double) radiusMeters)));
 
         JsonNode response = post("/places:searchText", SEARCH_FIELD_MASK, body);
         return parsePlacesArray(response);

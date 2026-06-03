@@ -17,8 +17,10 @@ import com.alcohol.mapper.CheckInMapper;
 import com.alcohol.mapper.UserMapper;
 import com.alcohol.service.*;
 import com.alcohol.service.auth.UserAccountService;
+import com.alcohol.service.auth.EmailSender;
 import com.alcohol.util.CheckInStatsUtil;
 import com.alcohol.util.GeoUtil;
+import com.alcohol.config.AuthProperties;
 import com.alcohol.config.GooglePlacesProperties;
 import com.alcohol.places.BarPlacesSyncService;
 import com.alcohol.places.GooglePlacesService;
@@ -62,6 +64,7 @@ public class FrontendCompatService {
     private final UserDrinkService userDrinkService;
     private final GooglePlacesService googlePlacesService;
     private final GooglePlacesProperties googlePlacesProperties;
+    private final AuthProperties authProperties;
     private final BarPlacesSyncService barPlacesSyncService;
     private final PlacesToBarMapper placesToBarMapper;
     private final com.alcohol.community.CommunityFeedService communityFeedService;
@@ -69,6 +72,7 @@ public class FrontendCompatService {
     private final CheckInAccessHelper checkInAccessHelper;
     private final MediaUrlResolver mediaUrlResolver;
     private final FileStorageService fileStorageService;
+    private final List<EmailSender> emailSenders;
 
     public FrontendAuthResponse login(FrontendLoginRequest req) {
         String email = PhoneEmailUtil.normalizeEmail(req.getEmail());
@@ -85,7 +89,19 @@ public class FrontendCompatService {
             throw new BizException("Email already registered", 409);
         }
         User user = userAccountService.createEmailUser(email, req.getPassword(), req.getDisplayName());
+        sendWelcomeEmail(email, req.getDisplayName());
         return buildAuthResponse(user);
+    }
+
+    private void sendWelcomeEmail(String email, String displayName) {
+        if (emailSenders.isEmpty()) {
+            return;
+        }
+        try {
+            emailSenders.get(0).sendWelcome(email, displayName, authProperties.getDefaultLocale());
+        } catch (Exception e) {
+            log.warn("Welcome email skipped for {}: {}", email, e.getMessage());
+        }
     }
 
     public FrontendAuthResponse refresh(FrontendRefreshRequest req) {
@@ -223,14 +239,14 @@ public class FrontendCompatService {
         return vo;
     }
 
-    public FrontendNearbyBarsResponseVO nearbyBars(String city, Double lat, Double lng, Integer radiusMeters) {
+    public FrontendNearbyBarsResponseVO nearbyBars(String city, Double lat, Double lng, Integer radiusMeters, String query) {
         FrontendNearbyBarsResponseVO response = new FrontendNearbyBarsResponseVO();
         if (googlePlacesService.isAvailable()) {
             try {
                 String effectiveCity = StringUtils.hasText(city)
                         ? city
                         : googlePlacesProperties.getDefaultCity();
-                List<FrontendBarVO> fromGoogle = googlePlacesService.searchNearby(lat, lng, effectiveCity, radiusMeters);
+                List<FrontendBarVO> fromGoogle = googlePlacesService.searchNearby(lat, lng, effectiveCity, radiusMeters, query);
                 if (!fromGoogle.isEmpty()) {
                     response.setItems(enrichBarCheckInCounts(fromGoogle));
                     response.setSource("google_places");
@@ -253,7 +269,7 @@ public class FrontendCompatService {
     }
 
     private List<FrontendBarVO> nearbyBarItems(String city, Double lat, Double lng, Integer radiusMeters) {
-        return nearbyBars(city, lat, lng, radiusMeters).getItems();
+        return nearbyBars(city, lat, lng, radiusMeters, null).getItems();
     }
 
     public List<FrontendBarVO> barRankings(String city, Double lat, Double lng) {

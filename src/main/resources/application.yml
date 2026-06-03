@@ -58,6 +58,9 @@ alcohol:
     oauth:
       google:
         client-id: ${GOOGLE_CLIENT_ID:}
+        client-secret: ${GOOGLE_CLIENT_SECRET:}
+        callback-url: ${GOOGLE_OAUTH_CALLBACK_URL:}
+        allowed-redirect-origins: ${GOOGLE_OAUTH_ALLOWED_REDIRECT_ORIGINS:}
       facebook:
         app-id: ${FACEBOOK_APP_ID:}
         app-secret: ${FACEBOOK_APP_SECRET:}

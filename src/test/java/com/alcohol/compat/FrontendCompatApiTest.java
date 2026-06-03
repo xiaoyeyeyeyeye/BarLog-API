@@ -222,7 +222,7 @@ class FrontendCompatApiTest {
         bar.setRating(4.5);
         bar.setCheckInCount(0);
         when(googlePlacesService.isAvailable()).thenReturn(true);
-        when(googlePlacesService.searchNearby(isNull(), isNull(), eq("Singapore"), isNull()))
+        when(googlePlacesService.searchNearby(isNull(), isNull(), eq("Singapore"), isNull(), isNull()))
                 .thenReturn(List.of(bar));
 
         mockMvc.perform(get("/api/bars/nearby")

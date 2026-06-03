@@ -67,7 +67,7 @@
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| GET | `/api/bars/nearby` | `?city=` 或 `?lat=&lng=&radiusMeters=` → `{ items: Bar[], source, message? }` |
+| GET | `/api/bars/nearby` | `?city=` 或 `?lat=&lng=&radiusMeters=&query=` → `{ items: Bar[], source, message? }`；`query` 有值时走 Google Places **Text Search (New)** |
 | GET | `/api/bars/rankings` | 同上，按 `rating` 降序 |
 | GET | `/api/bars/{id}` | `BarDetail`（含 `checkInCount`）；可选 `?lat=&lng=` |
 | GET | `/api/bars/{id}/checkins` | `{ items: CheckIn[] }` |

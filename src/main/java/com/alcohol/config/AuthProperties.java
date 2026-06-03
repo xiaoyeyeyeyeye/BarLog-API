@@ -50,6 +50,11 @@ public class AuthProperties {
         @Data
         public static class Google {
             private String clientId = "";
+            private String clientSecret = "";
+            /** Backend OAuth callback registered in Google Cloud Console, e.g. https://app/api/auth/google/callback */
+            private String callbackUrl = "";
+            /** Comma-separated allowed frontend redirect origin prefixes, e.g. https://tunnel.trycloudflare.com */
+            private String allowedRedirectOrigins = "";
         }
 
         @Data

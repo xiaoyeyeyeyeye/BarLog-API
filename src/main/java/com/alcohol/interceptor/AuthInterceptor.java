@@ -31,6 +31,7 @@ public class AuthInterceptor implements HandlerInterceptor {
             "/api/auth/register",
             "/api/auth/refresh",
             "/api/auth/logout",
+            "/api/auth/google/",
             "/swagger-ui/",
             "/v3/api-docs",
             "/error",
