@@ -23,6 +23,8 @@ GOOGLE_OAUTH_ALLOWED_REDIRECT_ORIGINS=https://your-tunnel.trycloudflare.com
 
 Register the callback URL in Google Cloud Console OAuth client.
 
+**同事在 GCP 里怎么配？** 见 [GOOGLE_OAUTH_GCP_SETUP.md](./GOOGLE_OAUTH_GCP_SETUP.md)（可整份发给同事的 AI 助手）。
+
 ## Register welcome email
 
 `POST /api/auth/register` sends a welcome email when `EMAIL_PROVIDER=aws` (AWS SES).
