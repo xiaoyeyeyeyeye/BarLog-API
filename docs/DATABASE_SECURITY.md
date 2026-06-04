@@ -133,12 +133,14 @@ BACKUP_PASSPHRASE='你的备份口令' sudo -E bash scripts/deploy/backup-db-enc
 - [ ] 5432 不对公网（`ss -tlnp` 无 `0.0.0.0:5432`）
 - [ ] 8080 仅 `127.0.0.1` 或未监听公网
 - [ ] AWS 安全组已关 5432/8080
-- [ ] `JWT_SECRET`、DB 密码已更换为强随机值
+- [ ] 测试库使用 `test.env` + `alcohol_test`（与研发 `dev.env` 分离）
 - [ ] `COMPAT_ALLOW_ANONYMOUS=false`（测试/生产）
 - [ ] CORS 仅允许真实前端域名
 - [ ] Swagger 在对外环境关闭（`springdoc.*.enabled=false`）
 - [ ] 已配置加密备份与 14 天清理
-- [ ] Google / AWS 密钥仅在 `dev.env`，未进 Git
+- [ ] Google / AWS 密钥仅在服务器 env 文件，未进 Git
+
+切换测试环境见 `config/env.server-test.example` 与 `scripts/deploy/switch-server-to-test.sh`。
 
 ---
 
@@ -149,6 +151,7 @@ BACKUP_PASSPHRASE='你的备份口令' sudo -E bash scripts/deploy/backup-db-enc
 | `scripts/deploy/harden-docker-network.sh` | 关闭 DB/API 公网端口映射 |
 | `scripts/deploy/backup-db-encrypted.sh` | 加密逻辑备份 |
 | `scripts/deploy/update-google-oauth-env.sh` | OAuth 环境变量更新 |
+| `scripts/deploy/switch-server-to-test.sh` | 切换 spring-api 到 `alcohol_test` 测试库 |
 
 ---
 
