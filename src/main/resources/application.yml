@@ -68,6 +68,18 @@ alcohol:
     allow-anonymous: ${COMPAT_ALLOW_ANONYMOUS:true}
     demo-user-email: ${COMPAT_DEMO_EMAIL:demo@barlog.app}
     demo-user-password: ${COMPAT_DEMO_PASSWORD:password123}
+  security:
+    rate-limit:
+      enabled: ${SECURITY_RATE_LIMIT_ENABLED:true}
+      max-requests-per-minute-per-ip: ${SECURITY_AUTH_MAX_RPM:30}
+      max-failed-logins-per-ip: ${SECURITY_MAX_FAILED_LOGINS:10}
+      failed-login-window-minutes: ${SECURITY_FAILED_LOGIN_WINDOW_MIN:15}
+      max-registrations-per-ip-per-hour: ${SECURITY_MAX_REGISTER_PER_HOUR:5}
+    password:
+      enforce-policy: ${SECURITY_PASSWORD_POLICY:true}
+      min-length: ${SECURITY_PASSWORD_MIN_LENGTH:8}
+      require-letter: true
+      require-digit: true
     demo-user-display-name: ${COMPAT_DEMO_NAME:Mina Chen}
   google:
     places:

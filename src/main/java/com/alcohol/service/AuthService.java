@@ -7,6 +7,7 @@ import com.alcohol.entity.User;
 import com.alcohol.enums.AuthProvider;
 import com.alcohol.enums.VerificationChannel;
 import com.alcohol.enums.VerificationPurpose;
+import com.alcohol.security.AuthSecurityContext;
 import com.alcohol.service.auth.OAuthTokenVerifier;
 import com.alcohol.service.auth.OAuthUserInfo;
 import com.alcohol.service.auth.UserAccountService;
@@ -38,6 +39,7 @@ public class AuthService {
     private final PasswordUtil passwordUtil;
     private final JwtUtil jwtUtil;
     private final AuthProperties authProperties;
+    private final AuthSecurityContext authSecurity;
 
     public AuthMethodsVO supportedMethods() {
         AuthMethodsVO vo = new AuthMethodsVO();
@@ -91,6 +93,8 @@ public class AuthService {
 
     @Transactional
     public LoginVO registerEmail(EmailRegisterRequest req) {
+        authSecurity.beforeRegister();
+        authSecurity.validatePassword(req.getPassword());
         String email = PhoneEmailUtil.normalizeEmail(req.getEmail());
         verificationCodeService.verify("EMAIL", VerificationPurpose.REGISTER.name(), email, null, req.getOtpCode());
         User user = userAccountService.createEmailUser(email, req.getPassword(), req.getNickname());
@@ -102,6 +106,7 @@ public class AuthService {
         User user = userAccountService.findByEmail(email);
         if (user == null || !StringUtils.hasText(user.getPassword())
                 || !passwordUtil.matches(req.getPassword(), user.getPassword())) {
+            authSecurity.onLoginFailed();
             throw new BizException("邮箱或密码错误");
         }
         userAccountService.assertActive(user);
@@ -135,6 +140,8 @@ public class AuthService {
 
     @Transactional
     public LoginVO registerPhone(PhoneRegisterRequest req) {
+        authSecurity.beforeRegister();
+        authSecurity.validatePassword(req.getPassword());
         String cc = StringUtils.hasText(req.getCountryCode()) ? req.getCountryCode() : authProperties.getDefaultCountryCode();
         String phone = PhoneEmailUtil.normalizePhoneE164(cc, req.getPhone());
         User user = userAccountService.createPhoneUser(phone, cc, req.getPassword(), req.getNickname());
@@ -164,6 +171,7 @@ public class AuthService {
         User user = userAccountService.findByPhoneE164(phone);
         if (user == null || !StringUtils.hasText(user.getPassword())
                 || !passwordUtil.matches(req.getPassword(), user.getPassword())) {
+            authSecurity.onLoginFailed();
             throw new BizException("手机号或密码错误");
         }
         userAccountService.assertActive(user);

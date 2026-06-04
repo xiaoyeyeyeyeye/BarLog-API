@@ -25,6 +25,7 @@ import com.alcohol.config.GooglePlacesProperties;
 import com.alcohol.places.BarPlacesSyncService;
 import com.alcohol.places.GooglePlacesService;
 import com.alcohol.places.PlacesToBarMapper;
+import com.alcohol.security.AuthSecurityContext;
 import com.alcohol.util.PhoneEmailUtil;
 import com.alcohol.vo.persona.PersonaVO;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -73,17 +74,25 @@ public class FrontendCompatService {
     private final MediaUrlResolver mediaUrlResolver;
     private final FileStorageService fileStorageService;
     private final List<EmailSender> emailSenders;
+    private final AuthSecurityContext authSecurity;
 
     public FrontendAuthResponse login(FrontendLoginRequest req) {
         String email = PhoneEmailUtil.normalizeEmail(req.getEmail());
         User user = userAccountService.findByEmail(email);
-        compatAuthSupport.assertPassword(user, req.getPassword());
+        try {
+            compatAuthSupport.assertPassword(user, req.getPassword());
+        } catch (BizException e) {
+            authSecurity.onLoginFailed();
+            throw e;
+        }
         userAccountService.assertActive(user);
         return buildAuthResponse(user);
     }
 
     @Transactional
     public FrontendAuthResponse register(FrontendRegisterRequest req) {
+        authSecurity.beforeRegister();
+        authSecurity.validatePassword(req.getPassword());
         String email = PhoneEmailUtil.normalizeEmail(req.getEmail());
         if (userAccountService.findByEmail(email) != null) {
             throw new BizException("Email already registered", 409);
