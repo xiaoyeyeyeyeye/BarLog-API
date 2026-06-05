@@ -13,6 +13,12 @@ alcohol:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:https://app-test.barlog.app}
   compat:
     allow-anonymous: false
+  security:
+    rate-limit:
+      # 测试/UAT：同 IP 可多次注册；仍保留基本防刷
+      max-requests-per-minute-per-ip: 60
+      max-registrations-per-ip-per-hour: 30
+      max-failed-logins-per-ip: 20
   auth:
     sms:
       provider: ${SMS_PROVIDER:mock}

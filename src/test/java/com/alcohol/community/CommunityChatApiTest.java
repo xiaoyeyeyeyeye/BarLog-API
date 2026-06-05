@@ -96,6 +96,35 @@ class CommunityChatApiTest {
     }
 
     @Test
+    @Order(25)
+    void galleryFeedWithoutTodayCheckIn() throws Exception {
+        MvcResult login = mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "displayName": "Gallery Viewer",
+                                  "email": "gallery-viewer-%d@barlog.app",
+                                  "password": "password123"
+                                }
+                                """.formatted(System.currentTimeMillis())))
+                .andExpect(status().isCreated())
+                .andReturn();
+        String token = login.getResponse().getContentAsString()
+                .replaceAll("(?s).*\"accessToken\"\\s*:\\s*\"([^\"]+)\".*", "$1");
+
+        mockMvc.perform(get("/api/gallery/feed")
+                        .header("Authorization", "Bearer " + token)
+                        .param("range", "24h"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items").isArray());
+
+        mockMvc.perform(get("/api/community/eligibility")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.canViewCommunity").value(true));
+    }
+
+    @Test
     @Order(3)
     void likeAndComment() throws Exception {
         if (checkInId == null || checkInId.contains("{")) {

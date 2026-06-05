@@ -106,12 +106,13 @@ public class CommunityAccessHelper {
                 .ge(CheckIn::getCreatedAt, todayStart())) > 0;
     }
 
+    /** @deprecated No longer gated by today's check-in; kept for callers that only need auth. */
     public void assertCommunityUnlocked() {
-        String userId = requireUserId();
-        if (!hasTodayCheckIn(userId)) {
-            throw new BizException("Check in today to unlock community",
-                    403, "COMMUNITY_CHECKIN_REQUIRED");
-        }
+        requireUserId();
+    }
+
+    public void assertFeedAccess(String scope, String city, String barId) {
+        requireUserId();
     }
 
     public CheckIn findLatestTodayCheckIn(String userId) {
@@ -120,10 +121,6 @@ public class CommunityAccessHelper {
                 .ge(CheckIn::getCreatedAt, todayStart())
                 .orderByDesc(CheckIn::getCreatedAt)
                 .last("LIMIT 1"));
-    }
-
-    public void assertFeedAccess(String scope, String city, String barId) {
-        assertCommunityUnlocked();
     }
 
     public CheckIn requireVisiblePost(String checkInId) {

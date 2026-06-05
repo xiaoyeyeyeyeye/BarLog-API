@@ -86,7 +86,7 @@ SECURITY_PASSWORD_MIN_LENGTH=8
 |------|------|
 | `AuthRateLimitFilter` | 限制 login/register/otp/google/start 的 POST 频率 |
 | 登录失败计数 | 同一 IP 15 分钟内失败过多 → 429 |
-| 注册频率 | 同一 IP 每小时注册次数上限 |
+| 注册频率 | 同一 IP 每小时注册次数上限（默认 5；测试环境建议 30） |
 | `PasswordPolicyValidator` | 注册密码强度 |
 | `SecurityHeadersFilter` | `X-Frame-Options`、`X-Content-Type-Options` 等 |
 | OTP | 原有 cooldown + 日限额（`VerificationCodeService`） |
@@ -94,6 +94,29 @@ SECURITY_PASSWORD_MIN_LENGTH=8
 **SQL 注入**：业务代码使用 MyBatis-Plus `LambdaQueryWrapper`；`.last("LIMIT n")` 仅用于固定数字，勿拼接用户输入。
 
 **多实例**：当前限流在内存中；若以后水平扩展 API，需改为 Redis 限流。
+
+### 3.1 默认 vs 测试环境
+
+| 限制项 | 生产/研发默认 | 测试环境（`test` profile / `test.env`） |
+|--------|---------------|----------------------------------------|
+| 同一 IP 每分钟 auth 请求（login/register/otp 等） | **30** | **60** |
+| 同一 IP 每小时注册次数 | **5** | **30** |
+| 同一 IP 15 分钟内登录失败 | **10** | **20** |
+
+注册时会**同时**计入上述「每分钟 auth 请求」和「每小时注册」两个桶；测试阶段若多人共用同一出口 IP（公司 Wi‑Fi、Cloudflare 隧道），更容易触达 **5 次/小时** 上限。
+
+测试环境可再放宽（仅 `test.env`）：
+
+```env
+SECURITY_MAX_REGISTER_PER_HOUR=30
+SECURITY_AUTH_MAX_RPM=60
+```
+
+临时关闭限流（仅限内网 UAT，勿用于公网生产）：
+
+```env
+SECURITY_RATE_LIMIT_ENABLED=false
+```
 
 ---
 

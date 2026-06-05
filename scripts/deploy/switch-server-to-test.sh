@@ -53,6 +53,9 @@ overrides = {
     "ALCOHOL_COMPAT_ALLOW_ANONYMOUS": "false",
     "SECURITY_PASSWORD_POLICY": "false",
     "SECURITY_RATE_LIMIT_ENABLED": "true",
+    "SECURITY_AUTH_MAX_RPM": "60",
+    "SECURITY_MAX_REGISTER_PER_HOUR": "30",
+    "SECURITY_MAX_FAILED_LOGINS": "20",
 }
 out = []
 seen = set()

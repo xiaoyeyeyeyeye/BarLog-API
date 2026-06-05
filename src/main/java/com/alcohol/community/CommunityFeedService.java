@@ -46,11 +46,10 @@ public class CommunityFeedService {
 
     public CommunityEligibilityVO eligibility(String city, String barId) {
         String userId = accessHelper.requireUserId();
-        boolean unlocked = accessHelper.hasTodayCheckIn(userId);
         CommunityEligibilityVO vo = new CommunityEligibilityVO();
-        vo.setCanViewCommunity(unlocked);
-        vo.setCanViewCityFeed(unlocked);
-        vo.setCanViewBarFeed(unlocked);
+        vo.setCanViewCommunity(true);
+        vo.setCanViewCityFeed(true);
+        vo.setCanViewBarFeed(true);
 
         CheckIn today = accessHelper.findLatestTodayCheckIn(userId);
         if (today != null) {
@@ -62,13 +61,13 @@ public class CommunityFeedService {
     }
 
     public FrontendItemsResponse<FrontendGalleryPostVO> galleryFeed(String city, String range) {
-        accessHelper.assertCommunityUnlocked();
+        accessHelper.requireUserId();
         return toGalleryResponse(feedPosts("global", null, null, range, null, 30, false));
     }
 
     public FrontendItemsResponse<CommunityPostVO> communityFeed(String scope, String city, String barId,
                                                                String range, String cursor, Integer limit) {
-        accessHelper.assertCommunityUnlocked();
+        accessHelper.requireUserId();
         int pageSize = normalizeLimit(limit);
         FeedPage page = feedPosts("global", null, null, range, cursor, pageSize, true);
         FrontendItemsResponse<CommunityPostVO> response = new FrontendItemsResponse<>();
