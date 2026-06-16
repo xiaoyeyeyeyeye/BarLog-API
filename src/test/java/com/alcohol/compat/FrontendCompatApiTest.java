@@ -145,6 +145,28 @@ class FrontendCompatApiTest {
     }
 
     @Test
+    @Order(35)
+    void updateProfileDisplayNameAndAvatar() throws Exception {
+        if (accessToken == null || accessToken.contains("{")) {
+            return;
+        }
+        mockMvc.perform(patch("/api/users/me")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"displayName":"Midnight Alias","avatarUrl":"/uploads/photos/test-avatar.jpg"}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.displayName").value("Midnight Alias"))
+                .andExpect(jsonPath("$.avatarUrl").value("/uploads/photos/test-avatar.jpg"));
+
+        mockMvc.perform(get("/api/auth/me")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.displayName").value("Midnight Alias"));
+    }
+
+    @Test
     @Order(8)
     void getCheckInDetail() throws Exception {
         if (checkinId == null || checkinId.contains("{")) {

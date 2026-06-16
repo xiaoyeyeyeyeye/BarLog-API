@@ -24,7 +24,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Sql(scripts = {
         "/db/V6_google_places_bars.sql",
         "/db/V7_community_interactions.sql",
-        "/db/V8_chat.sql"
+        "/db/V8_chat.sql",
+        "/db/V9_expired_public_checkin.sql"
 }, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 class CommunityChatApiTest {
 
@@ -122,6 +123,19 @@ class CommunityChatApiTest {
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.canViewCommunity").value(true));
+    }
+
+    @Test
+    @Order(26)
+    void galleryFeedIncludesExpiredPublicCheckIns() throws Exception {
+        if (accessToken == null || accessToken.contains("{")) {
+            return;
+        }
+        mockMvc.perform(get("/api/gallery/feed")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("range", "24h"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items[?(@.id=='checkin_expired_public')]").exists());
     }
 
     @Test

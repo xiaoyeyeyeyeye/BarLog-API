@@ -78,14 +78,8 @@ public class CommunityFeedService {
 
     private FeedPage feedPosts(String scope, String city, String barId, String range, String cursor,
                                int limit, boolean includeInteractionFields) {
-        LocalDateTime now = LocalDateTime.now();
-        int hours = accessHelper.resolveRangeHours(range);
-        LocalDateTime since = now.minusHours(hours);
-
         LambdaQueryWrapper<CheckIn> qw = new LambdaQueryWrapper<CheckIn>()
                 .in(CheckIn::getVisibility, "PUBLIC", "TONIGHT_ONLY")
-                .gt(CheckIn::getExpiresAt, now)
-                .ge(CheckIn::getCreatedAt, since)
                 .orderByDesc(CheckIn::getCreatedAt)
                 .orderByDesc(CheckIn::getId)
                 .last("LIMIT " + (limit + 1));

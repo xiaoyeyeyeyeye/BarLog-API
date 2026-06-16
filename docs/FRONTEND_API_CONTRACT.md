@@ -29,6 +29,7 @@
 |------|------|------|------|
 | POST | `/api/auth/login` | `{ email, password }` | `{ user, accessToken, refreshToken? }` |
 | POST | `/api/auth/register` | `{ displayName, email, password }` | 201，同上 |
+| PATCH | `/api/users/me` | `{ displayName?, avatarUrl? }` | 更新昵称/头像 → `User` |
 | POST | `/api/auth/logout` | — | `{}` |
 | GET | `/api/auth/me` | — | `User` |
 | POST | `/api/auth/refresh` | `{ refreshToken? }` | `AuthResponse` |
@@ -115,8 +116,8 @@ Gallery 与 Community 共用打卡数据；Match/AI 仍为 compat 占位；**Cha
 
 **Ephemeral 规则**
 
-- 打卡 `visibility` 为 `public` 或 `tonight_only` 时，`expires_at = now + 24h`（可配置 `GALLERY_DEFAULT_HOURS`）
-- Feed 只返回 `expires_at > now` 的记录；过期后自动从列表消失
+- 打卡 `visibility` 为 `public` 或 `tonight_only` 时，创建时仍会写入 `expires_at = now + 24h`（可配置 `GALLERY_DEFAULT_HOURS`），供 Match 等「今晚在线」逻辑使用
+- **Gallery / Community Feed 不再按 `expires_at` 或 `range` 过滤**；凡 `public` / `tonight_only` 的打卡均可见（分页 `cursor` / `limit` 仍生效）
 
 **CommunityPost** 在 GalleryPost 基础上扩展：`barId`, `socialStatus`, `visibility`, `likedCount`, `commentCount`, `likedByMe`, `expiresAt`, `avatarUrl`
 

@@ -142,10 +142,6 @@ public class CommunityAccessHelper {
         if (!"PUBLIC".equals(visibility) && !"TONIGHT_ONLY".equals(visibility)) {
             return false;
         }
-        LocalDateTime now = LocalDateTime.now();
-        if (checkIn.getExpiresAt() != null && !checkIn.getExpiresAt().isAfter(now)) {
-            return false;
-        }
         return true;
     }
 

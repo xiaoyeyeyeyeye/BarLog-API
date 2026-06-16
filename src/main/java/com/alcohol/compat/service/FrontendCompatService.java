@@ -144,6 +144,27 @@ public class FrontendCompatService {
         return mapper.toUser(user, resolvePersonaStatement(user.getId()));
     }
 
+    @Transactional
+    public FrontendUserVO updateProfile(FrontendUpdateProfileRequest req) {
+        if (req.getDisplayName() == null && req.getAvatarUrl() == null) {
+            throw new BizException("At least one of displayName or avatarUrl is required", 400, "VALIDATION_ERROR");
+        }
+        User user = requireCurrentUser();
+        if (req.getDisplayName() != null) {
+            String name = req.getDisplayName().trim();
+            if (name.length() < 2 || name.length() > 40) {
+                throw new BizException("displayName must be 2-40 characters", 400, "VALIDATION_ERROR");
+            }
+            user.setNickname(name);
+        }
+        if (req.getAvatarUrl() != null) {
+            user.setAvatarUrl(req.getAvatarUrl().trim());
+        }
+        user.setUpdatedAt(LocalDateTime.now());
+        userMapper.updateById(user);
+        return mapper.toUser(user, resolvePersonaStatement(user.getId()));
+    }
+
     public FrontendCheckInVO createCheckIn(FrontendCreateCheckInRequest req) {
         checkInAccessHelper.requireUserId();
         if (StringUtils.hasText(req.getBarId())) {
@@ -335,11 +356,9 @@ public class FrontendCompatService {
     }
 
     public FrontendItemsResponse<FrontendCheckInVO> barCheckIns(String barId) {
-        LocalDateTime now = LocalDateTime.now();
         List<CheckIn> list = checkInMapper.selectList(new LambdaQueryWrapper<CheckIn>()
                 .eq(CheckIn::getBarId, barId)
                 .in(CheckIn::getVisibility, "PUBLIC", "TONIGHT_ONLY")
-                .gt(CheckIn::getExpiresAt, now)
                 .orderByDesc(CheckIn::getCreatedAt));
         return FrontendItemsResponse.of(toCheckInList(list));
     }

@@ -119,9 +119,8 @@ public class GoogleWebOAuthService {
     }
 
     private User resolveUser(OAuthUserInfo info, String mode) {
-        if ("login".equalsIgnoreCase(mode)) {
-            return userAccountService.loginOAuthUser(info, AuthProvider.GOOGLE);
-        }
+        // Google SSO: first-time users on the Login tab should still get an account (standard OAuth UX).
+        // findOrCreate links an existing email account or creates a new one; it no longer 404s on first Google sign-in.
         return userAccountService.findOrCreateOAuthUser(info, AuthProvider.GOOGLE, null).user();
     }
 
